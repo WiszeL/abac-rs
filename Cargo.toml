@@ -1,0 +1,7 @@
+[package]
+name = "abac-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reflect-rs = { git = "https://github.com/WiszeL/reflect-rs.git" }
