@@ -28,7 +28,7 @@ fn main() -> Result<(), String> {
     // -------- two users -----------------------------------------------
     let admin = User {
         name: "Han".into(),
-        role: "guest".into(),             // passes first OR‑group
+        role: "admin".into(),             // passes first OR‑group
         department: "informatics".into(), // passes second group
         id: 7,
     };

@@ -20,8 +20,8 @@ fn resolve_operand<'a>(
     operand: &'a Operand,
 ) -> Option<ReflValue> {
     match operand {
-        Operand::Subject(attr) => sub.get_field(&attr),
-        Operand::Object(attr) => obj.get_field(&attr),
+        Operand::Subject(attr) => sub.get_field(attr),
+        Operand::Object(attr) => obj.get_field(attr),
         Operand::Const(v) => Some(v.clone()),
     }
 }

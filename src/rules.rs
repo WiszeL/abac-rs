@@ -14,10 +14,10 @@ impl FromStr for Operand {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
-        if s.starts_with("subject.") {
-            Ok(Operand::Subject(s[8..].to_string()))
-        } else if s.starts_with("object.") {
-            Ok(Operand::Object(s[7..].to_string()))
+        if let Some(stripped) = s.strip_prefix("subject.") {
+            Ok(Operand::Subject(stripped.to_string()))
+        } else if let Some(stripped) = s.strip_prefix("object.") {
+            Ok(Operand::Object(stripped.to_string()))
         } else if s.starts_with('\'') && s.ends_with('\'') {
             let val = &s[1..s.len() - 1];
             Ok(Operand::Const(ReflValue::Str(val.into())))
