@@ -12,12 +12,12 @@ dependencies = [
 [[package]]
 name = "core"
 version = "0.1.0"
-source = "git+https://github.com/WiszeL/reflect-rs.git#3ee86a1ea1409fdf651ab37ec8fd6c067d630097"
+source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
 
 [[package]]
 name = "derive"
 version = "0.1.0"
-source = "git+https://github.com/WiszeL/reflect-rs.git#3ee86a1ea1409fdf651ab37ec8fd6c067d630097"
+source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
 dependencies = [
  "quote",
  "syn",
@@ -44,7 +44,7 @@ dependencies = [
 [[package]]
 name = "reflect-rs"
 version = "0.1.0"
-source = "git+https://github.com/WiszeL/reflect-rs.git#3ee86a1ea1409fdf651ab37ec8fd6c067d630097"
+source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
 dependencies = [
  "core",
  "derive",

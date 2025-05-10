@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-#[derive(Debug)]
+/// The supported binary operators for attribute comparison.
+#[derive(Debug, Clone, Copy)]
 pub enum Op {
     Eq,
     Ne,
@@ -10,6 +11,7 @@ pub enum Op {
     Le,
 }
 
+/// Evaluates a binary comparison between two values based on the provided operator.
 pub fn cmp<T: PartialOrd + PartialEq>(l: T, r: T, op: &Op) -> bool {
     match op {
         Op::Eq => l == r,

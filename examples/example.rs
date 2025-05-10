@@ -1,8 +1,7 @@
-use abac_rs::{evaluate_rules, rules::Rules};
-use reflect_rs::Reflection;
+use abac_rs::{AbacEntity, evaluate_rules};
 
-// ===== mock types that derive Reflection ===============================
-#[derive(Reflection)]
+// ===== mock types that derive AbacEntity ===============================
+#[derive(AbacEntity)]
 struct User {
     name: String,
     role: String,
@@ -10,7 +9,7 @@ struct User {
     id: i32,
 }
 
-#[derive(Reflection)]
+#[derive(AbacEntity)]
 struct File {
     owner_id: i32,
     tag: String,
@@ -19,11 +18,10 @@ struct File {
 
 fn main() -> Result<(), String> {
     // (role == "admin" OR owner_id == subject.id)  AND  (department == "informatics")
-    let raw = r#"
+    let rules = r#"
         [ subject.role == 'admin', object.owner_id == subject.id ],
         [ subject.department == 'informatics' ]
     "#;
-    let rules: Rules = raw.parse()?; // FromStr chain
 
     // -------- two users -----------------------------------------------
     let admin = User {
@@ -47,8 +45,14 @@ fn main() -> Result<(), String> {
     };
 
     // -------- evaluate -------------------------------------------------
-    println!("Han allowed? {}", evaluate_rules(&rules, &admin, &doc)); // true
-    println!("Leia allowed? {}", evaluate_rules(&rules, &guest, &doc)); // false
+    println!(
+        "Han allowed? {}",
+        evaluate_rules(rules, &admin, &doc).unwrap()
+    ); // true
+    println!(
+        "Leia allowed? {}",
+        evaluate_rules(rules, &guest, &doc).unwrap()
+    ); // false
 
     Ok(())
 }
