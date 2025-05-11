@@ -1,25 +1,61 @@
-//! Attribute-Based Access Control (ABAC) Engine in Pure Rust
-//! ----------------------------------------------------------
+//! abac-rs — Attribute-Based Access Control (ABAC) Engine in Pure Rust
 //!
-//! This crate provides a lightweight and expressive ABAC evaluation engine
-//! built entirely in Rust. Policies are defined as human-readable strings
-//! and evaluated against subjects and objects implementing the `Reflection` trait.
+//! This crate provides a lightweight and expressive ABAC evaluation engine built entirely in Rust.
+//! Policies are defined as human-readable strings and evaluated against subjects and objects
+//! implementing the `AbacEntity` trait.
 //!
-//! - Policy: `[ subject.role == 'admin', object.owner_id == subject.id ], [ subject.department == 'informatics' ]`
-//! - Semantics: (A OR B) AND (C)
-//! - Integration: Just implement `Reflection` on your types!
+//! ## ✨ Features
+//!
+//! - ✅ Human-readable rule strings (`subject.role == 'admin'`)
+//! - ✅ Supports `AND` of `OR` groups: `[A, B], [C]` → `(A OR B) AND C`
+//! - ✅ Dynamic field access via `AbacEntity` trait
+//! - ✅ Supports comparison on `String`, `i32`, `f32`, `bool`
+//! - ✅ Custom error types for integration (`Parse`, `UnknownField`, `TypeMismatch`)
+//! - 🌐 Easily extensible (e.g. time, IP, env conditions)
+//!
+//! ## 🔧 Example
+//!
+//! ```rust,ignore
+//! use abac_rs::{evaluate_rules, AbacEntity};
+//!
+//! #[derive(AbacEntity)]
+//! struct User {
+//!     role: String,
+//!     department: String,
+//!     id: i32,
+//! }
+//!
+//! #[derive(AbacEntity)]
+//! struct File {
+//!     owner_id: i32,
+//!     tag: String,
+//! }
+//!
+//! let rules = r#"
+//!     [ subject.role == 'admin', object.owner_id == subject.id ],
+//!     [ subject.department == 'informatics' ]
+//! "#;
+//!
+//! let user = User { role: "admin".into(), department: "informatics".into(), id: 42 };
+//! let file = File { owner_id: 42, tag: "draft".into() };
+//!
+//! let allowed = evaluate_rules(rules, &user, &file)?;
+//! assert!(allowed);
+//! ```
 
 mod operator;
 
 pub mod error;
 pub mod rules;
 
-pub use reflect_rs::Reflection as AbacEntity;
-
 use error::Error;
 use operator::cmp;
 use reflect_rs::ReflValue;
 use rules::{Clause, Operand, Rules};
+
+/// A trait representing any ABAC entity (subject or object) with field-level reflection.
+/// Re-exported from [`reflect_rs::Reflection`](https://github.com/WiszeL/reflect-rs).
+pub use reflect_rs::Reflection as AbacEntity;
 
 /// Evaluates a full ABAC policy string against the given subject and object.
 ///

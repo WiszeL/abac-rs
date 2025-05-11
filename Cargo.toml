@@ -2,6 +2,14 @@
 name = "abac-rs"
 version = "0.1.0"
 edition = "2024"
+authors = ["WiszeL <handidwic1225@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "Minimal and composable ABAC (Attribute-Based Access Control) engine in pure Rust."
+repository = "https://github.com/wiszel/abac-rs"
+readme = "README.md"
+keywords = ["abac", "authorization", "rust", "access-control", "policy"]
+categories = ["authentication", "config", "access-control"]
+documentation = "https://docs.rs/abac-rs"
 
 [dependencies]
 reflect-rs = { git = "https://github.com/WiszeL/reflect-rs.git" }

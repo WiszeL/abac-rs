@@ -1,3 +1,8 @@
+//! Error definitions for ABAC evaluation.
+//!
+//! This module contains the core `Error` type used throughout the ABAC engine,
+//! covering parse errors, unknown field lookups, and type mismatches.
+
 use crate::operator::Op;
 
 /// Top-level error type for ABAC evaluation.

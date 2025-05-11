@@ -1,3 +1,8 @@
+//! Rule model types and parsers for ABAC policy evaluation.
+//!
+//! This module defines the core rule representations: `Operand`, `Clause`, `AnyOf`, and `Rules`.
+//! These types support `TryFrom<&str>` to allow parsing from string policies.
+
 use reflect_rs::ReflValue;
 
 use crate::operator::Op;
