@@ -70,8 +70,8 @@ pub use reflect_rs::Reflection as AbacEntity;
 /// - `Err(Error)` if parsing or evaluation fails
 pub fn evaluate_rules(
     rules: &str,
-    sub: &impl AbacEntity,
-    obj: &impl AbacEntity,
+    sub: &(impl AbacEntity + ?Sized),
+    obj: &(impl AbacEntity + ?Sized),
 ) -> Result<bool, Error> {
     let rules = Rules::try_from(rules).map_err(Error::Parse)?;
 
@@ -92,8 +92,8 @@ pub fn evaluate_rules(
 
 /// Resolves a field or literal operand into its value using subject/object reflection.
 fn resolve_operand<'a>(
-    sub: &'a impl AbacEntity,
-    obj: &'a impl AbacEntity,
+    sub: &'a (impl AbacEntity + ?Sized),
+    obj: &'a (impl AbacEntity + ?Sized),
     operand: &'a Operand,
 ) -> Result<ReflValue<'a>, Error> {
     match *operand {
@@ -108,7 +108,11 @@ fn resolve_operand<'a>(
 }
 
 /// Evaluates a single clause with resolved operands and operator.
-fn eval_clause(c: &Clause, sub: &impl AbacEntity, obj: &impl AbacEntity) -> Result<bool, Error> {
+fn eval_clause(
+    c: &Clause,
+    sub: &(impl AbacEntity + ?Sized),
+    obj: &(impl AbacEntity + ?Sized),
+) -> Result<bool, Error> {
     let lhs = resolve_operand(sub, obj, &c.left)?;
     let rhs = resolve_operand(sub, obj, &c.right)?;
 
