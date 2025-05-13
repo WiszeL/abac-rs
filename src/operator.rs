@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 /// The supported binary operators for attribute comparison.
 #[derive(Debug, Clone, Copy)]
@@ -9,6 +9,20 @@ pub enum Op {
     Lt,
     Ge,
     Le,
+}
+
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Op::Eq => "==",
+            Op::Ne => "!=",
+            Op::Gt => ">",
+            Op::Lt => "<",
+            Op::Ge => ">=",
+            Op::Le => "<=",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 /// Evaluates a binary comparison between two values based on the provided operator.
