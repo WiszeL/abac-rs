@@ -6,6 +6,7 @@ version = 4
 name = "abac-rs"
 version = "0.1.0"
 dependencies = [
+ "derive 0.1.0",
  "reflect-rs",
  "thiserror",
 ]
@@ -14,6 +15,14 @@ dependencies = [
 name = "core"
 version = "0.1.0"
 source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
+
+[[package]]
+name = "derive"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "derive"
@@ -48,7 +57,7 @@ version = "0.1.0"
 source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
 dependencies = [
  "core",
- "derive",
+ "derive 0.1.0 (git+https://github.com/WiszeL/reflect-rs.git)",
 ]
 
 [[package]]

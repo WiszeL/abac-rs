@@ -13,4 +13,5 @@ documentation = "https://docs.rs/abac-rs"
 
 [dependencies]
 reflect-rs = { git = "https://github.com/WiszeL/reflect-rs.git" }
+derive = { path = "./derive" }
 thiserror = "2.0.12"
