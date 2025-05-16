@@ -3,15 +3,13 @@
 //! This module defines the core rule representations: `Operand`, `Clause`, `AnyOf`, and `Rules`.
 //! These types support `TryFrom<&str>` to allow parsing from string policies.
 
-use reflect_rs::ReflValue;
-
-use crate::operator::Op;
+use crate::{entity::Value, operator::Op};
 
 /// An operand in a rule clause: either subject field, object field, or literal constant.
 pub enum Operand<'a> {
-    Subject(&'a str),     // Attr on subject
-    Object(&'a str),      // Attr on object
-    Const(ReflValue<'a>), // literal/hardcoded value
+    Subject(&'a str), // Attr on subject
+    Object(&'a str),  // Attr on object
+    Const(Value<'a>), // literal/hardcoded value
 }
 
 /// A single policy clause: `<left operand> <operator> <right operand>`
@@ -39,9 +37,9 @@ impl<'a> TryFrom<&'a str> for Operand<'a> {
             Ok(Operand::Object(stripped))
         } else if s.starts_with('\'') && s.ends_with('\'') {
             let val = &s[1..s.len() - 1];
-            Ok(Operand::Const(ReflValue::Str(val)))
+            Ok(Operand::Const(Value::Str(val)))
         } else if let Ok(int) = s.parse::<i32>() {
-            Ok(Operand::Const(ReflValue::Int(int)))
+            Ok(Operand::Const(Value::Int(int)))
         } else {
             Err(format!("Invalid operand: {s}"))
         }

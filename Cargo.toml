@@ -12,6 +12,8 @@ categories = ["authentication", "config", "access-control"]
 documentation = "https://docs.rs/abac-rs"
 
 [dependencies]
-reflect-rs = { git = "https://github.com/WiszeL/reflect-rs.git" }
-derive = { path = "./derive" }
-thiserror = "2.0.12"
+abac_core = { path = "./abac_core" }
+abac_derive = { path = "./abac_derive" }
+
+[workspace]
+members = ["abac_derive", "abac_core"]

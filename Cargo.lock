@@ -6,28 +6,20 @@ version = 4
 name = "abac-rs"
 version = "0.1.0"
 dependencies = [
- "derive 0.1.0",
- "reflect-rs",
+ "abac_core",
+ "abac_derive",
+]
+
+[[package]]
+name = "abac_core"
+version = "0.1.0"
+dependencies = [
  "thiserror",
 ]
 
 [[package]]
-name = "core"
+name = "abac_derive"
 version = "0.1.0"
-source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
-
-[[package]]
-name = "derive"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
-name = "derive"
-version = "0.1.0"
-source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
 dependencies = [
  "quote",
  "syn",
@@ -49,15 +41,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d"
 dependencies = [
  "proc-macro2",
-]
-
-[[package]]
-name = "reflect-rs"
-version = "0.1.0"
-source = "git+https://github.com/WiszeL/reflect-rs.git#817a3820e94e31408a15f308bfb23d4454e69bf9"
-dependencies = [
- "core",
- "derive 0.1.0 (git+https://github.com/WiszeL/reflect-rs.git)",
 ]
 
 [[package]]

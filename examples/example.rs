@@ -1,7 +1,7 @@
-use abac_rs::{AbacEntity, evaluate_rules};
+use abac_rs::{Entity, evaluate_rules};
 
-// ===== mock types that derive AbacEntity ===============================
-#[derive(AbacEntity)]
+// ===== mock types that derive Entity ===============================
+#[derive(Entity)]
 struct User {
     name: String,
     role: String,
@@ -9,7 +9,7 @@ struct User {
     id: i32,
 }
 
-#[derive(AbacEntity)]
+#[derive(Entity)]
 struct File {
     owner_id: i32,
     tag: String,
@@ -26,7 +26,7 @@ fn main() -> Result<(), String> {
     // -------- two users -----------------------------------------------
     let admin = User {
         name: "Han".into(),
-        role: "admin".into(),             // passes first OR‑group
+        role: "guest".into(),             // passes first OR‑group
         department: "informatics".into(), // passes second group
         id: 7,
     };

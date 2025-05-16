@@ -1,14 +1,14 @@
-use abac_rs::{AbacEntity, error::Error, evaluate_rules};
+use abac_rs::{Entity, error::Error, evaluate_rules};
 
-// --- helper structs implementing AbacEntity ------------------------
-#[derive(AbacEntity)]
+// --- helper structs implementing Entity ------------------------
+#[derive(Entity)]
 struct User {
     id: i32,
     role: String,
     department: String,
 }
 
-#[derive(AbacEntity)]
+#[derive(Entity)]
 struct File {
     owner_id: i32,
     tag: String,
