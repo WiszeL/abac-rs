@@ -119,6 +119,7 @@ fn eval_clause(
         (Value::Int(l), Value::Int(r)) => Ok(cmp(l, r, &c.op)),
         (Value::Float(l), Value::Float(r)) => Ok(cmp(l, r, &c.op)),
         (Value::Bool(l), Value::Bool(r)) => Ok(cmp(l, r, &c.op)),
+        (Value::Uuid(l), Value::Uuid(r)) => Ok(cmp(l, r, &c.op)),
         (l, r) => Err(Error::TypeMismatch {
             lhs: l.kind(),
             rhs: r.kind(),
