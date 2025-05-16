@@ -31,8 +31,9 @@ pub fn derive_entity(input: TokenStream) -> TokenStream {
             } else if is_bool(ty) {
                 quote!(abac_rs::Value::Bool(self.#fname))
             } else {
-                // unsupported → fall back to None
-                quote! { return None; }
+                // unsupported → just return None for this field
+                arms.push(quote! { #key => None, });
+                continue; // skip the usual push below
             };
 
             arms.push(quote! { #key => Some(#variant), });
@@ -49,6 +50,7 @@ pub fn derive_entity(input: TokenStream) -> TokenStream {
             }
         }
     };
+    
     TokenStream::from(expanded)
 }
 
@@ -70,8 +72,6 @@ fn is_bool(ty: &syn::Type) -> bool {
 }
 
 fn is_uuid(ty: &syn::Type) -> bool {
-    matches!(ty, syn::Type::Path(p) if {
-        let segments = &p.path.segments;
-        segments.len() == 1 && segments[0].ident == "Uuid"
-    })
+    matches!(ty, syn::Type::Path(p)
+        if p.path.segments.last().map(|s| s.ident == "Uuid").unwrap_or(false))
 }
