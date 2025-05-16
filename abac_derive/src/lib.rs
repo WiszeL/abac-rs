@@ -26,6 +26,10 @@ pub fn derive_entity(input: TokenStream) -> TokenStream {
                 quote!(abac_rs::Value::Int(self.#fname as i32))
             } else if is_float(ty) {
                 quote!(abac_rs::Value::Float(self.#fname as f32))
+            } else if is_uuid(ty) {
+                quote!(abac_rs::Value::Uuid(self.#fname))
+            } else if is_bool(ty) {
+                quote!(abac_rs::Value::Bool(self.#fname))
             } else {
                 // unsupported → fall back to None
                 quote! { return None; }
@@ -52,9 +56,22 @@ pub fn derive_entity(input: TokenStream) -> TokenStream {
 fn is_string(ty: &syn::Type) -> bool {
     matches!(ty, syn::Type::Path(p) if p.path.is_ident("String"))
 }
+
 fn is_integer(ty: &syn::Type) -> bool {
     matches!(ty, syn::Type::Path(p) if p.path.is_ident("i32"))
 }
+
 fn is_float(ty: &syn::Type) -> bool {
     matches!(ty, syn::Type::Path(p) if p.path.is_ident("f32"))
+}
+
+fn is_bool(ty: &syn::Type) -> bool {
+    matches!(ty, syn::Type::Path(p) if p.path.is_ident("bool"))
+}
+
+fn is_uuid(ty: &syn::Type) -> bool {
+    matches!(ty, syn::Type::Path(p) if {
+        let segments = &p.path.segments;
+        segments.len() == 1 && segments[0].ident == "Uuid"
+    })
 }

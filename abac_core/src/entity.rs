@@ -1,9 +1,12 @@
+use uuid::Uuid;
+
 #[derive(Debug, Clone)]
 pub enum Value<'a> {
     Str(&'a str),
     Int(i32),
     Float(f32),
     Bool(bool),
+    Uuid(Uuid),
 }
 
 /// A helper to get what type is it
@@ -14,6 +17,7 @@ impl Value<'_> {
             Value::Int(_) => "int",
             Value::Float(_) => "float",
             Value::Bool(_) => "bool",
+            Value::Uuid(_) => "uuid",
         }
     }
 }
