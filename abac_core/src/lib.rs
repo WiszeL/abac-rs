@@ -1,129 +1,112 @@
-//! abac-rs — Attribute-Based Access Control (ABAC) Engine in Pure Rust
+//! abac-rs — Attribute-Based Access Control Engine
 //!
-//! This crate provides a lightweight and expressive ABAC evaluation engine built entirely in Rust.
-//! Policies are defined as human-readable strings and evaluated against subjects and objects
-//! implementing the `Entity` trait.
+//! ### Features
+//! - Human-readable rule strings (`subject.role == 'admin'`).
+//! - AND-of-OR evaluation (`[A,B], [C]` ⇒ `(A OR B) AND C`).
+//! - Optional *object* support: omit `object` for type-level actions
+//!   (e.g. `list users`) and all `object.*` clauses are ignored.
+//! - Extensible: plug extra `Value` variants or custom operators.
 //!
-//! ## ✨ Features
+//! ## Quick start
+//! ```no_run
+//! use abac_rs::{Entity, evaluate_rules};
 //!
-//! - ✅ Human-readable rule strings (`subject.role == 'admin'`)
-//! - ✅ Supports `AND` of `OR` groups: `[A, B], [C]` → `(A OR B) AND C`
-//! - ✅ Dynamic field access via `Entity` trait
-//! - ✅ Supports comparison on `String`, `i32`, `f32`, `bool`
-//! - ✅ Custom error types for integration (`Parse`, `UnknownField`, `TypeMismatch`)
-//! - 🌐 Easily extensible (e.g. time, IP, env conditions)
-//!
-//! ## 🔧 Example
-//!
-//! ```rust,ignore
-//! use abac_rs::{evaluate_rules, Entity};
-//!
-//! #[derive(Entity)]
-//! struct User {
-//!     role: String,
-//!     department: String,
-//!     id: i32,
-//! }
-//!
-//! #[derive(Entity)]
-//! struct File {
-//!     owner_id: i32,
-//!     tag: String,
-//! }
-//!
-//! let rules = r#"
-//!     [ subject.role == 'admin', object.owner_id == subject.id ],
-//!     [ subject.department == 'informatics' ]
-//! "#;
-//!
-//! let user = User { role: "admin".into(), department: "informatics".into(), id: 42 };
-//! let file = File { owner_id: 42, tag: "draft".into() };
-//!
-//! let allowed = evaluate_rules(rules, &user, &file)?;
-//! assert!(allowed);
+//! # #[derive(abac_rs::Entity)]
+//! # struct User { role: &'static str, department: &'static str }
+//! # let user = User { role: "admin", department: "it" };
+//! let policy = "[ subject.role == 'admin' ]";
+//! assert!(evaluate_rules(policy, &user, None).unwrap());
 //! ```
 
 mod entity;
+mod error;
 mod operator;
 mod rules;
 
-pub mod error;
+pub use entity::{Entity, NullEntity, Value};
+pub use error::Error;
+pub use rules::{AnyOf, Clause, Operand, Rules};
 
-use error::Error;
 use operator::cmp;
-use rules::{Clause, Operand, Rules};
+use rules::clause_uses_object;
 
-pub use entity::{Entity, Value};
-
-/// Evaluates a full ABAC policy string against the given subject and object.
+/// Public evaluation entry point.
 ///
-/// # Arguments
-/// - `rules`: policy string
-/// - `sub`: reference to subject implementing `Entity`
-/// - `obj`: reference to object implementing `Entity`
+/// * `sub`  – the **subject** performing the action.
+/// * `obj`  – the **object** being accessed, or `None` for type-level checks.
+/// * `rules` – policy string.
 ///
-/// # Returns
-/// - `Ok(true)` if policy is satisfied
-/// - `Ok(false)` if denied
-/// - `Err(Error)` if parsing or evaluation fails
+/// If `obj` is `None`, every clause containing `object.*` is silently skipped.
+///
+/// Returns `Ok(true)` if all AND-groups succeed, `Ok(false)` if denied,
+/// or `Err` for policy / type errors.
 pub fn evaluate_rules(
     rules: &str,
-    sub: &(impl Entity + ?Sized),
-    obj: &(impl Entity + ?Sized),
+    sub: &dyn Entity,
+    obj: Option<&dyn Entity>,
 ) -> Result<bool, Error> {
     let rules = Rules::try_from(rules).map_err(Error::Parse)?;
 
-    for any in &rules.0 {
-        let mut group_ok = false;
+    // use a dummy object when `None`
+    let null_obj = NullEntity;
+    let obj_ref = obj.unwrap_or(&null_obj);
+
+    'groups: for any in &rules.0 {
         for clause in &any.0 {
-            if eval_clause(clause, sub, obj)? {
-                group_ok = true; // one clause true ⇒ OR‑group true
-                break;
+            if obj.is_none() && clause_uses_object(clause) {
+                continue; // skip clause that needs object.*
+            }
+            if eval_clause(clause, sub, obj_ref)? {
+                continue 'groups; // OR-group satisfied
             }
         }
-        if !group_ok {
-            return Ok(false); // AND‑chain fails fast
-        }
+        return Ok(false); // AND-group failed
     }
     Ok(true)
 }
 
-/// Resolves a field or literal operand into its value using subject/object reflection.
-fn resolve_operand<'a>(
-    sub: &'a (impl Entity + ?Sized),
-    obj: &'a (impl Entity + ?Sized),
-    operand: &'a Operand,
-) -> Result<Value<'a>, Error> {
-    match *operand {
-        Operand::Subject(attr) => sub
-            .get_field(attr)
-            .ok_or_else(|| Error::UnknownField(format!("Subject's field: {attr}"))),
-        Operand::Object(attr) => obj
-            .get_field(attr)
-            .ok_or_else(|| Error::UnknownField(format!("Object's field: {attr}"))),
-        Operand::Const(ref v) => Ok(v.clone()),
-    }
-}
+// ---------- internal helpers ----------------------------------------
 
-/// Evaluates a single clause with resolved operands and operator.
-fn eval_clause(
-    c: &Clause,
-    sub: &(impl Entity + ?Sized),
-    obj: &(impl Entity + ?Sized),
-) -> Result<bool, Error> {
-    let lhs = resolve_operand(sub, obj, &c.left)?;
-    let rhs = resolve_operand(sub, obj, &c.right)?;
-
-    match (lhs, rhs) {
-        (Value::Str(l), Value::Str(r)) => Ok(cmp(l, r, &c.op)),
-        (Value::Int(l), Value::Int(r)) => Ok(cmp(l, r, &c.op)),
-        (Value::Float(l), Value::Float(r)) => Ok(cmp(l, r, &c.op)),
-        (Value::Bool(l), Value::Bool(r)) => Ok(cmp(l, r, &c.op)),
-        (Value::Uuid(l), Value::Uuid(r)) => Ok(cmp(l, r, &c.op)),
-        (l, r) => Err(Error::TypeMismatch {
-            lhs: l.kind(),
-            rhs: r.kind(),
-            op: c.op,
-        }), // type mismatch or missing field
+fn eval_clause(c: &Clause, sub: &dyn Entity, obj: &dyn Entity) -> Result<bool, Error> {
+    // Resolve operand -----------------------------------------------
+    fn resolve<'a>(
+        op: &'a Operand<'a>,
+        sub: &'a dyn Entity,
+        obj: &'a dyn Entity,
+    ) -> Result<Value<'a>, Error> {
+        match *op {
+            Operand::Subject(field) => sub
+                .get_field(field)
+                .ok_or_else(|| Error::UnknownField(format!("subject.{field}"))),
+            Operand::Object(field) => obj
+                .get_field(field)
+                .ok_or_else(|| Error::UnknownField(format!("object.{field}"))),
+            Operand::Const(ref v) => Ok(v.clone()),
+        }
     }
+
+    let l = resolve(&c.left, sub, obj)?;
+    let r = resolve(&c.right, sub, obj)?;
+
+    // Type-safe comparison ------------------------------------------
+    macro_rules! cmp_match {
+        ($lhs:ident, $rhs:ident, $ty:path) => {
+            cmp($lhs, $rhs, &c.op)
+        };
+    }
+    use Value::*;
+    Ok(match (l, r) {
+        (Str(l), Str(r)) => cmp_match!(l, r, Str),
+        (Int(l), Int(r)) => cmp_match!(l, r, Int),
+        (Float(l), Float(r)) => cmp_match!(l, r, Float),
+        (Bool(l), Bool(r)) => cmp_match!(l, r, Bool),
+        (Uuid(l), Uuid(r)) => cmp_match!(l, r, Uuid),
+        (lhs, rhs) => {
+            return Err(Error::TypeMismatch {
+                lhs: lhs.kind(),
+                rhs: rhs.kind(),
+                op: c.op,
+            });
+        }
+    })
 }

@@ -1,4 +1,4 @@
-use abac_rs::{Entity, error::Error, evaluate_rules};
+use abac_rs::{Entity, Error, evaluate_rules};
 
 // --- helper structs implementing Entity ------------------------
 #[derive(Entity)]
@@ -14,7 +14,7 @@ struct File {
     tag: String,
 }
 
-// Success: (admin OR owner) AND department matches
+// Success: (admin OR owner) AND department matches
 #[test]
 fn policy_allows_admin_in_department() {
     let rules = r#"
@@ -31,10 +31,12 @@ fn policy_allows_admin_in_department() {
         owner_id: 42,
         tag: "draft".into(),
     };
-    assert!(evaluate_rules(rules, &user, &file).unwrap());
+
+    // ← Pass Some(&file) for instance-level check
+    assert!(evaluate_rules(rules, &user, Some(&file)).unwrap());
 }
 
-// Denied: none of OR‑group clauses pass
+// Denied: none of OR-group clauses pass
 #[test]
 fn policy_denies_guest_wrong_department() {
     let rules = r#"
@@ -51,7 +53,9 @@ fn policy_denies_guest_wrong_department() {
         owner_id: 99,
         tag: "draft".into(),
     };
-    assert!(!evaluate_rules(rules, &user, &file).unwrap());
+
+    // ← Pass Some(&file) here as well
+    assert!(!evaluate_rules(rules, &user, Some(&file)).unwrap());
 }
 
 // Error: unknown field referenced in policy
@@ -69,7 +73,7 @@ fn unknown_field_error() {
         tag: "draft".into(),
     };
 
-    match evaluate_rules(rules, &user, &file) {
+    match evaluate_rules(rules, &user, Some(&file)) {
         Err(Error::UnknownField(_)) => {} // expected
         other => panic!("expected UnknownField error, got {other:?}"),
     }
@@ -90,7 +94,7 @@ fn type_mismatch_error() {
         tag: "draft".into(),
     };
 
-    match evaluate_rules(rules, &user, &file) {
+    match evaluate_rules(rules, &user, Some(&file)) {
         Err(Error::TypeMismatch { .. }) => {} // expected
         other => panic!("expected TypeMismatch error, got {other:?}"),
     }
@@ -111,7 +115,7 @@ fn parse_error_invalid_operator() {
         tag: "draft".into(),
     };
 
-    match evaluate_rules(rules, &user, &file) {
+    match evaluate_rules(rules, &user, Some(&file)) {
         Err(Error::Parse(_)) => {} // expected
         other => panic!("expected Parse error, got {other:?}"),
     }

@@ -1,47 +1,51 @@
-//! Rule model types and parsers for ABAC policy evaluation.
-//!
-//! This module defines the core rule representations: `Operand`, `Clause`, `AnyOf`, and `Rules`.
-//! These types support `TryFrom<&str>` to allow parsing from string policies.
+//! AST + parser for `[ subject.role == 'admin', object.id == 1 ], [ … ]`
 
 use crate::{entity::Value, operator::Op};
 
-/// An operand in a rule clause: either subject field, object field, or literal constant.
+/// Operand in a clause.
 pub enum Operand<'a> {
-    Subject(&'a str), // Attr on subject
-    Object(&'a str),  // Attr on object
-    Const(Value<'a>), // literal/hardcoded value
+    Subject(&'a str),
+    Object(&'a str),
+    Const(Value<'a>),
 }
 
-/// A single policy clause: `<left operand> <operator> <right operand>`
+/// `<left> <op> <right>`
 pub struct Clause<'a> {
     pub left: Operand<'a>,
     pub op: Op,
     pub right: Operand<'a>,
 }
 
-/// A disjunction (OR-group) of clauses. Evaluates to true if any clause inside is true.
-pub struct AnyOf<'a>(pub Vec<Clause<'a>>); // true if **one** Clause is true
+/// OR-group: true if *any* clause is true.
+pub struct AnyOf<'a>(pub Vec<Clause<'a>>);
 
-/// The complete policy: a conjunction (AND-chain) of OR-groups.
+/// Policy root: AND of OR-groups.
 pub struct Rules<'a>(pub Vec<AnyOf<'a>>);
 
-// ==================== Parser ==================== //
+// ---------- helper used by lib.rs -----------------------------------
+
+#[inline]
+pub fn clause_uses_object(c: &Clause) -> bool {
+    use Operand::*;
+    matches!(c.left, Object(_)) || matches!(c.right, Object(_))
+}
+
+// ---------- naïve parser (keep simple & fast) -----------------------
 
 impl<'a> TryFrom<&'a str> for Operand<'a> {
     type Error = String;
     fn try_from(s: &'a str) -> Result<Self, Self::Error> {
         let s = s.trim();
-        if let Some(stripped) = s.strip_prefix("subject.") {
-            Ok(Operand::Subject(stripped))
-        } else if let Some(stripped) = s.strip_prefix("object.") {
-            Ok(Operand::Object(stripped))
+        if let Some(rest) = s.strip_prefix("subject.") {
+            Ok(Operand::Subject(rest))
+        } else if let Some(rest) = s.strip_prefix("object.") {
+            Ok(Operand::Object(rest))
         } else if s.starts_with('\'') && s.ends_with('\'') {
-            let val = &s[1..s.len() - 1];
-            Ok(Operand::Const(Value::Str(val)))
-        } else if let Ok(int) = s.parse::<i32>() {
-            Ok(Operand::Const(Value::Int(int)))
+            Ok(Operand::Const(Value::Str(&s[1..s.len() - 1])))
+        } else if let Ok(i) = s.parse::<i32>() {
+            Ok(Operand::Const(Value::Int(i)))
         } else {
-            Err(format!("Invalid operand: {s}"))
+            Err(format!("invalid operand `{s}`"))
         }
     }
 }
@@ -49,21 +53,18 @@ impl<'a> TryFrom<&'a str> for Operand<'a> {
 impl<'a> TryFrom<&'a str> for Clause<'a> {
     type Error = String;
     fn try_from(s: &'a str) -> Result<Self, Self::Error> {
-        // naive split — improve later with proper tokenizer
         let ops = ["==", "!=", ">=", "<=", ">", "<"];
         for op in ops {
-            if let Some(i) = s.find(op) {
-                let (left, right) = s.split_at(i);
-                let right = &right[op.len()..];
-
+            if let Some(idx) = s.find(op) {
+                let (l, r) = s.split_at(idx);
                 return Ok(Clause {
-                    left: Operand::try_from(left)?,
+                    left: Operand::try_from(l)?,
                     op: op.parse()?,
-                    right: Operand::try_from(right)?,
+                    right: Operand::try_from(&r[op.len()..])?,
                 });
             }
         }
-        Err("No valid operator found".into())
+        Err("operator not found".into())
     }
 }
 
@@ -84,10 +85,9 @@ impl<'a> TryFrom<&'a str> for AnyOf<'a> {
 impl<'a> TryFrom<&'a str> for Rules<'a> {
     type Error = String;
     fn try_from(s: &'a str) -> Result<Self, Self::Error> {
-        let groups = s
-            .split("],") // crude but works for your format
+        s.split("],")
             .map(AnyOf::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
-        Ok(Rules(groups))
+            .collect::<Result<Vec<_>, _>>()
+            .map(Rules)
     }
 }
