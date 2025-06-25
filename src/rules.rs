@@ -25,4 +25,4 @@ pub(crate) struct Rule {
 }
 
 #[derive(Deserialize)]
-pub struct Rules(pub(crate) Vec<Rule>);
+pub struct Rules(pub(crate) Vec<Vec<Rule>>);

@@ -29,7 +29,7 @@ pub(crate) fn construct_entity<T: Serialize>(entity: &T) -> Result<Entity, Error
 }
 
 /// Which to evaluate based on the left/right rule
-fn which_to_evaluate<'a>(
+pub(crate) fn which_to_evaluate<'a>(
     subject: &'a Entity,
     object: &'a Entity,
     side_rule: &'a SideRule,
@@ -51,22 +51,30 @@ where
     let subject = construct_entity(subject)?;
     let object = construct_entity(object)?;
 
-    for r in &rules.0 {
-        let left = which_to_evaluate(&subject, &object, &r.left_rule)?;
-        let right = which_to_evaluate(&subject, &object, &r.right_rule)?;
-
-        let pass = match r.operator {
-            Operator::Equal => left == right,
-            Operator::Greater => left > right,
-            Operator::Less => left < right,
-            Operator::GreaterEqual => left >= right,
-            Operator::LessEqual => left <= right,
-        };
-
-        if !pass {
-            return Ok(false);
+    rules.0.iter().try_fold(true, |acc, r_and| {
+        if !acc {
+            return Ok(false); // short-circuit outer AND
         }
-    }
 
-    Ok(true)
+        let or_result = r_and.iter().try_fold(false, |acc, rule| {
+            if acc {
+                return Ok::<_, Error>(true); // short-circuit inner OR
+            }
+
+            let left = which_to_evaluate(&subject, &object, &rule.left_rule)?;
+            let right = which_to_evaluate(&subject, &object, &rule.right_rule)?;
+
+            let pass = match rule.operator {
+                Operator::Equal => left == right,
+                Operator::Greater => left > right,
+                Operator::Less => left < right,
+                Operator::GreaterEqual => left >= right,
+                Operator::LessEqual => left <= right,
+            };
+
+            Ok(pass)
+        })?;
+
+        Ok(or_result)
+    })
 }

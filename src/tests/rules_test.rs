@@ -1,26 +1,113 @@
-use crate::{Rule, SideRule};
+use serde_value::Value;
+
+use crate::{Operator, Rule, SideRule};
 
 #[test]
-fn rules_test() {
+fn rule_01_equal_subject_vs_object() {
     // ##### Arrange ##### //
     let json_rule = r#"
-    {
-        "left_rule": { "Subject": "name" },
-        "operator": "Equal",
-        "right_rule": { "Object": "owner" }
-    }
-    "#;
+        {
+            "left_rule":  { "Subject": "name" },
+            "operator":   "Equal",
+            "right_rule": { "Object":  "owner" }
+        }
+        "#;
 
     // ##### Act ##### //
-    let result = serde_json::from_str::<Rule>(json_rule);
+    let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
 
     // ##### Assert ##### //
-    assert!(result.is_ok(), "Shouldn't throw error");
+    assert!(matches!(rule.left_rule,
+                         SideRule::Subject(ref s) if s == "name"));
+    assert!(matches!(rule.right_rule,
+                         SideRule::Object(ref s) if s == "owner"));
+    assert!(matches!(rule.operator, Operator::Equal));
+}
 
-    let parsed_result = result.unwrap();
+#[test]
+fn rule_02_greater_subject_vs_literal() {
+    // ##### Arrange ##### //
+    let json_rule = r#"
+        {
+            "left_rule":  { "Subject": "age" },
+            "operator":   "Greater",
+            "right_rule": { "Literal": 18 }
+        }
+        "#;
 
-    assert!(
-        matches!(parsed_result.left_rule, SideRule::Subject(_)),
-        "Should have proper deserialization"
-    );
+    // ##### Act ##### //
+    let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
+
+    // ##### Assert ##### //
+    assert!(matches!(rule.left_rule,
+                         SideRule::Subject(ref s) if s == "age"));
+    assert!(matches!(rule.right_rule,
+                         SideRule::Literal(ref v) if *v == Value::U64(18)));
+    assert!(matches!(rule.operator, Operator::Greater));
+}
+
+#[test]
+fn rule_03_less_subject_vs_literal() {
+    // ##### Arrange ##### //
+    let json_rule = r#"
+        {
+            "left_rule":  { "Subject": "priority" },
+            "operator":   "Less",
+            "right_rule": { "Literal": 5 }
+        }
+        "#;
+
+    // ##### Act ##### //
+    let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
+
+    // ##### Assert ##### //
+    assert!(matches!(rule.left_rule,
+                         SideRule::Subject(ref s) if s == "priority"));
+    assert!(matches!(rule.right_rule,
+                         SideRule::Literal(ref v) if *v == Value::U64(5)));
+    assert!(matches!(rule.operator, Operator::Less));
+}
+
+#[test]
+fn rule_04_greater_equal_subject_vs_literal() {
+    // ##### Arrange ##### //
+    let json_rule = r#"
+        {
+            "left_rule":  { "Subject": "score" },
+            "operator":   "GreaterEqual",
+            "right_rule": { "Literal": 90 }
+        }
+        "#;
+
+    // ##### Act ##### //
+    let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
+
+    // ##### Assert ##### //
+    assert!(matches!(rule.left_rule,
+                         SideRule::Subject(ref s) if s == "score"));
+    assert!(matches!(rule.right_rule,
+                         SideRule::Literal(ref v) if *v == Value::U64(90)));
+    assert!(matches!(rule.operator, Operator::GreaterEqual));
+}
+
+#[test]
+fn rule_05_less_equal_subject_vs_literal() {
+    // ##### Arrange ##### //
+    let json_rule = r#"
+        {
+            "left_rule":  { "Subject": "cost" },
+            "operator":   "LessEqual",
+            "right_rule": { "Literal": 1000 }
+        }
+        "#;
+
+    // ##### Act ##### //
+    let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
+
+    // ##### Assert ##### //
+    assert!(matches!(rule.left_rule,
+                         SideRule::Subject(ref s) if s == "cost"));
+    assert!(matches!(rule.right_rule,
+                         SideRule::Literal(ref v) if *v == Value::U64(1000)));
+    assert!(matches!(rule.operator, Operator::LessEqual));
 }
