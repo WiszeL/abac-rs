@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Serialize;
 use serde_value::Value;
 
-use crate::{Error, Operator, Rule, SideRule};
+use crate::{Error, Operator, Rules, SideRule};
 
 type Entity = HashMap<String, Value>;
 
@@ -42,7 +42,7 @@ fn which_to_evaluate<'a>(
 }
 
 /// The actual
-pub fn evaluate<S, O>(subject: &S, object: &O, rule: Rule) -> Result<bool, Error>
+pub fn evaluate<S, O>(subject: &S, object: &O, rules: Rules) -> Result<bool, Error>
 where
     S: Serialize,
     O: Serialize,
@@ -51,18 +51,22 @@ where
     let subject = construct_entity(subject)?;
     let object = construct_entity(object)?;
 
-    // Which to evaluate?
-    let left = which_to_evaluate(&subject, &object, &rule.left_rule)?;
-    let right = which_to_evaluate(&subject, &object, &rule.right_rule)?;
+    for r in &rules.0 {
+        let left = which_to_evaluate(&subject, &object, &r.left_rule)?;
+        let right = which_to_evaluate(&subject, &object, &r.right_rule)?;
 
-    // Evaluate based on the rules
-    let value = match rule.operator {
-        Operator::Equal => left == right,
-        Operator::Greater => left > right,
-        Operator::Less => left < right,
-        Operator::GreaterEqual => left >= right,
-        Operator::LessEqual => left <= right,
-    };
+        let pass = match r.operator {
+            Operator::Equal => left == right,
+            Operator::Greater => left > right,
+            Operator::Less => left < right,
+            Operator::GreaterEqual => left >= right,
+            Operator::LessEqual => left <= right,
+        };
 
-    Ok(value)
+        if !pass {
+            return Ok(false);
+        }
+    }
+
+    Ok(true)
 }

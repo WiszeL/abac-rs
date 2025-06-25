@@ -18,8 +18,11 @@ pub(crate) enum Operator {
 }
 
 #[derive(Deserialize)]
-pub struct Rule {
+pub(crate) struct Rule {
     pub(crate) left_rule: SideRule,
     pub(crate) operator: Operator,
     pub(crate) right_rule: SideRule,
 }
+
+#[derive(Deserialize)]
+pub struct Rules(pub(crate) Vec<Rule>);
