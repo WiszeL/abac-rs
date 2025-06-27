@@ -1,37 +1,32 @@
-use std::collections::HashMap;
-
-use serde::Serialize;
 use serde_value::Value;
 
-use crate::{Error, Operator, Rules, SideRule};
+use crate::{Entity, EntityValue, Error, Operator, Rules, SideRule};
 
-type Entity = HashMap<String, Value>;
+// /// Serializing any struct that derives Serialize into ABAC Entity
+// pub(crate) fn construct_entity<T: Serialize>(entity: &T) -> Result<Entity, Error> {
+//     let value = serde_value::to_value(entity)?;
+//     let mut ett = HashMap::new();
 
-/// Serializing any struct that derives Serialize into ABAC Entity
-pub(crate) fn construct_entity<T: Serialize>(entity: &T) -> Result<Entity, Error> {
-    let value = serde_value::to_value(entity)?;
-    let mut ett = HashMap::new();
+//     if let Value::Map(map) = value {
+//         ett = map
+//             .into_iter()
+//             .filter_map(|(k, v)| {
+//                 if let Value::String(name) = k {
+//                     Some((name, v))
+//                 } else {
+//                     None
+//                 }
+//             })
+//             .collect();
+//     }
 
-    if let Value::Map(map) = value {
-        ett = map
-            .into_iter()
-            .filter_map(|(k, v)| {
-                if let Value::String(name) = k {
-                    Some((name, v))
-                } else {
-                    None
-                }
-            })
-            .collect();
-    }
-
-    Ok(ett)
-}
+//     Ok(ett)
+// }
 
 /// Which to evaluate based on the left/right rule
 pub(crate) fn which_to_evaluate<'a>(
-    subject: &'a Entity,
-    object: &'a Entity,
+    subject: &'a EntityValue,
+    object: &'a EntityValue,
     side_rule: &'a SideRule,
 ) -> Result<&'a Value, Error> {
     match side_rule {
@@ -42,14 +37,10 @@ pub(crate) fn which_to_evaluate<'a>(
 }
 
 /// The actual
-pub fn evaluate<S, O>(subject: &S, object: &O, rules: Rules) -> Result<bool, Error>
-where
-    S: Serialize,
-    O: Serialize,
-{
+pub fn evaluate(subject: &dyn Entity, object: &dyn Entity, rules: Rules) -> Result<bool, Error> {
     // Construct Entity
-    let subject = construct_entity(subject)?;
-    let object = construct_entity(object)?;
+    let subject = subject.into_value()?;
+    let object = object.into_value()?;
 
     rules.0.iter().try_fold(true, |acc, r_and| {
         if !acc {

@@ -1,49 +1,43 @@
 use std::collections::HashMap;
 
-use serde::Serialize;
+use derive::Entity;
 use serde_value::Value;
 
-use crate::{Operator, Rule, Rules, SideRule, construct_entity, evaluate, which_to_evaluate};
+use crate::{Operator, Rule, Rules, SideRule, evaluate, which_to_evaluate};
 
-#[derive(Serialize)]
-struct Entity {
-    name: String,
-    age: i32,
-}
+// #[test]
+// fn construct_entity_test() {
+//     // ##### Arrange ##### //
+//     let entity = Entity {
+//         name: "WiszeL".into(),
+//         age: 21,
+//     };
 
-#[test]
-fn construct_entity_test() {
-    // ##### Arrange ##### //
-    let entity = Entity {
-        name: "WiszeL".into(),
-        age: 21,
-    };
+//     // ##### Act ##### //
+//     let result = construct_entity(&entity);
 
-    // ##### Act ##### //
-    let result = construct_entity(&entity);
+//     // ##### Assert ##### //
+//     // 1. Shouldn't even be failed
+//     assert!(result.is_ok(), "Shouldn't even be failed");
 
-    // ##### Assert ##### //
-    // 1. Shouldn't even be failed
-    assert!(result.is_ok(), "Shouldn't even be failed");
+//     let entity_result = result.unwrap();
 
-    let entity_result = result.unwrap();
+//     // 2. Should give Some if exists
+//     assert!(
+//         matches!(entity_result.get("name"), Some(Value::String(_))),
+//         "Should give Some with String if exists"
+//     );
+//     assert!(
+//         matches!(entity_result.get("age"), Some(Value::I32(_))),
+//         "Should give Some with String if exists"
+//     );
 
-    // 2. Should give Some if exists
-    assert!(
-        matches!(entity_result.get("name"), Some(Value::String(_))),
-        "Should give Some with String if exists"
-    );
-    assert!(
-        matches!(entity_result.get("age"), Some(Value::I32(_))),
-        "Should give Some with String if exists"
-    );
-
-    // 3. Should give NONE if not exists
-    assert!(
-        matches!(entity_result.get("Not existed"), None),
-        "Should give NONE if not exists"
-    );
-}
+//     // 3. Should give NONE if not exists
+//     assert!(
+//         matches!(entity_result.get("Not existed"), None),
+//         "Should give NONE if not exists"
+//     );
+// }
 
 #[test]
 fn which_to_evaluate_test() {
@@ -100,25 +94,24 @@ fn which_to_evaluate_test() {
     );
 }
 
-#[derive(Serialize)]
+#[derive(Entity)]
 struct User {
     name: String,
     age: u64,
 }
 
-#[derive(Serialize)]
+#[derive(Entity)]
 struct Task {
     owner: String,
 }
 
-#[test]
-fn evaluate_test() {
+#[tokio::test]
+async fn evaluate_test() {
     // ##### Arrange ##### //
     let user = User {
         name: "WiszeL".into(),
         age: 21,
     };
-
     let task = Task {
         owner: "WiszeL".into(),
     };
