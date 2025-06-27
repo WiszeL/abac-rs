@@ -47,8 +47,8 @@ pub fn derive_entity(input: TokenStream) -> TokenStream {
         quote! {
             map.insert(
                 #fname.to_string(),
-                serde_value::to_value(&self.#ident)
-                    .expect("serde_value::to_value failed")
+                #crate_ident::serde_value::to_value(&self.#ident)
+                    .expect("#crate_ident::serde_value::to_value failed")
             );
         }
     });
@@ -59,7 +59,7 @@ pub fn derive_entity(input: TokenStream) -> TokenStream {
 
         impl #crate_ident::Entity for #struct_ident {
             fn into_value(&self) -> Result<
-                std::collections::HashMap<String, serde_value::Value>,
+                std::collections::HashMap<String, #crate_ident::serde_value::Value>,
                 #crate_ident::Error
             > {
                 let mut map = std::collections::HashMap::new();
