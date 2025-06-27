@@ -6,8 +6,8 @@ mod error;
 mod evaluator;
 mod rules;
 
-pub use derive::Entity;
 pub use entity::*;
 pub use error::*;
 pub use evaluator::*;
+pub use macros::*;
 pub use rules::*;

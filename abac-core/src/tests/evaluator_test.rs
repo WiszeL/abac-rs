@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use derive::Entity;
+use macros::Entity;
 use serde_value::Value;
 
 use crate::{Operator, Rule, Rules, SideRule, evaluate, which_to_evaluate};
