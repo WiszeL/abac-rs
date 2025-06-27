@@ -11,4 +11,4 @@ pub use error::*;
 pub use evaluator::*;
 pub use macros::*;
 pub use rules::*;
-pub use serde_value::*;
+pub use serde_value;
