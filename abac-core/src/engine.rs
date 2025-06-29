@@ -5,7 +5,7 @@ use std::{
 
 use uuid::Uuid;
 
-use crate::{DynAdapter, Entity, EntityAdapter, Error, Rules, evaluate};
+use crate::{DynAdapter, EmptyEntity, Entity, EntityAdapter, Error, Rules, evaluate};
 
 #[derive(Default)]
 pub struct Engine {
@@ -45,15 +45,21 @@ impl Engine {
         &self,
         subject: &S,
         resource: &str,
-        resource_id: Uuid,
+        resource_id: Option<Uuid>,
         rules: &Rules,
     ) -> Result<bool, Error> {
-        let adapter = self.adapters.get(resource).ok_or(Error::AdapterNotFound)?;
-        let provider = self
-            .providers
-            .get(&adapter.provider_type())
-            .ok_or(Error::AdapterNotFound)?;
-        let resource_entity = adapter.load(resource_id, provider.as_ref()).await?;
+        let resource_entity = match resource_id {
+            Some(id) => {
+                let adapter = self.adapters.get(resource).ok_or(Error::AdapterNotFound)?;
+                let provider = self
+                    .providers
+                    .get(&adapter.provider_type())
+                    .ok_or(Error::AdapterNotFound)?;
+
+                adapter.load(id, provider.as_ref()).await?
+            }
+            None => Box::new(EmptyEntity),
+        };
 
         evaluate(subject, resource_entity.as_ref(), rules)
     }

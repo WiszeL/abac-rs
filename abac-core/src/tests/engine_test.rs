@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use macros::Entity;
+use serde_value::Value;
 use uuid::Uuid;
 
 use crate::{Engine, EntityAdapter, LoadResult, Operator, Rule, Rules, SideRule};
@@ -59,12 +60,20 @@ fn with_provider_test() {
 async fn evaluate_with_subject_test() {
     // ##### Arrange ##### //
     let path_buf = PathBuf::new();
-    let rule = vec![Rule {
+
+    let w_rsc_rule = vec![Rule {
         left_rule: SideRule::Subject("name".into()),
         operator: Operator::Equal,
         right_rule: SideRule::Object("owner".into()),
     }];
-    let rules = Rules(vec![rule]);
+    let wo_rsc_rule = vec![Rule {
+        left_rule: SideRule::Subject("name".into()),
+        operator: Operator::Equal,
+        right_rule: SideRule::Literal(Value::String("WiszeL".into())),
+    }];
+
+    let w_rsc_rules = Rules(vec![w_rsc_rule]);
+    let wo_rsc_rules = Rules(vec![wo_rsc_rule]);
 
     let engine = Engine::new()
         .with_provider(path_buf)
@@ -75,11 +84,22 @@ async fn evaluate_with_subject_test() {
         name: "WiszeL".into(),
     };
 
-    let result = engine
-        .evaluate_with_subject(&subject, "task", Uuid::nil(), &rules)
+    // 1. With Resource
+    let w_result = engine
+        .evaluate_with_subject(&subject, "task", Some(Uuid::nil()), &w_rsc_rules)
+        .await;
+
+    // 2. Without Resource
+    let wo_result = engine
+        .evaluate_with_subject(&subject, "task", None, &wo_rsc_rules)
         .await;
 
     // ##### Assert ##### //
-    assert!(result.is_ok(), "Evaluate shouldn't throw any error!");
-    assert!(result.unwrap(), "Evaluate should be true!");
+    // 1. With Resource
+    assert!(w_result.is_ok(), "Evaluate shouldn't throw any error!");
+    assert!(w_result.unwrap(), "Evaluate should be true!");
+
+    // 2. Without Resource
+    assert!(wo_result.is_ok(), "Evalute shouldn't throw any error!");
+    assert!(wo_result.unwrap(), "Evaluate should be true!");
 }
