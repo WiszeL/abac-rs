@@ -7,4 +7,7 @@ pub enum Error {
 
     #[error("Field not found!")]
     FieldNotFound,
+
+    #[error("Adapter not found!")]
+    AdapterNotFound,
 }

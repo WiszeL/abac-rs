@@ -5,40 +5,6 @@ use serde_value::Value;
 
 use crate::{Operator, Rule, Rules, SideRule, evaluate, which_to_evaluate};
 
-// #[test]
-// fn construct_entity_test() {
-//     // ##### Arrange ##### //
-//     let entity = Entity {
-//         name: "WiszeL".into(),
-//         age: 21,
-//     };
-
-//     // ##### Act ##### //
-//     let result = construct_entity(&entity);
-
-//     // ##### Assert ##### //
-//     // 1. Shouldn't even be failed
-//     assert!(result.is_ok(), "Shouldn't even be failed");
-
-//     let entity_result = result.unwrap();
-
-//     // 2. Should give Some if exists
-//     assert!(
-//         matches!(entity_result.get("name"), Some(Value::String(_))),
-//         "Should give Some with String if exists"
-//     );
-//     assert!(
-//         matches!(entity_result.get("age"), Some(Value::I32(_))),
-//         "Should give Some with String if exists"
-//     );
-
-//     // 3. Should give NONE if not exists
-//     assert!(
-//         matches!(entity_result.get("Not existed"), None),
-//         "Should give NONE if not exists"
-//     );
-// }
-
 #[test]
 fn which_to_evaluate_test() {
     // ##### Arrange ##### //
@@ -127,7 +93,7 @@ async fn evaluate_test() {
         right_rule: SideRule::Literal(Value::U64(18)),
     }]]);
 
-    let result = evaluate(&user, &task, rules);
+    let result = evaluate(&user, &task, &rules);
     assert_eq!(result.unwrap(), true, "Case 01: age >= 18 should pass");
 
     /* -----------------------------------------------
@@ -139,7 +105,7 @@ async fn evaluate_test() {
         right_rule: SideRule::Object("owner".into()),
     }]]);
 
-    let result = evaluate(&user, &task, rules);
+    let result = evaluate(&user, &task, &rules);
     assert_eq!(result.unwrap(), true, "Case 02: name == owner should pass");
 
     /* -----------------------------------------------
@@ -151,7 +117,7 @@ async fn evaluate_test() {
         right_rule: SideRule::Literal(Value::U64(30)),
     }]]);
 
-    let result = evaluate(&user, &task, rules);
+    let result = evaluate(&user, &task, &rules);
     assert_eq!(result.unwrap(), false, "Case 03: age > 30 should fail");
 
     /* -----------------------------------------------
@@ -170,7 +136,7 @@ async fn evaluate_test() {
         },
     ]]);
 
-    let result = evaluate(&user, &task, rules);
+    let result = evaluate(&user, &task, &rules);
     assert_eq!(result.unwrap(), true, "Case 04: OR group should pass");
 
     /* -----------------------------------------------
@@ -189,6 +155,6 @@ async fn evaluate_test() {
         }],
     ]);
 
-    let result = evaluate(&user, &task, rules);
+    let result = evaluate(&user, &task, &rules);
     assert_eq!(result.unwrap(), false, "Case 05: AND block should fail");
 }

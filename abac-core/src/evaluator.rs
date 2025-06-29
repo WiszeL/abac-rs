@@ -16,11 +16,7 @@ pub(crate) fn which_to_evaluate<'a>(
 }
 
 /// The actual
-pub fn evaluate<S, O>(subject: &S, object: &O, rules: Rules) -> Result<bool, Error>
-where
-    S: Entity,
-    O: Entity,
-{
+pub fn evaluate(subject: &dyn Entity, object: &dyn Entity, rules: &Rules) -> Result<bool, Error> {
     // Construct Entity
     let subject = subject.into_value()?;
     let object = object.into_value()?;
