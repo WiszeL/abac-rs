@@ -1,12 +1,16 @@
-use std::{any::TypeId, collections::HashMap};
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+};
 
 use uuid::Uuid;
 
 use crate::{DynAdapter, Entity, EntityAdapter, Error, Rules, evaluate};
 
+#[derive(Default)]
 pub struct Engine {
-    adapters: HashMap<&'static str, Box<dyn DynAdapter>>,
-    providers: HashMap<TypeId, Box<dyn Send + Sync>>,
+    pub(crate) adapters: HashMap<&'static str, Box<dyn DynAdapter>>,
+    pub(crate) providers: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
 
 impl Engine {
@@ -18,19 +22,23 @@ impl Engine {
     }
 
     #[inline]
-    pub fn register_adapter<A>(&mut self, name: &'static str)
+    pub fn register_adapter<A>(mut self, name: &'static str) -> Self
     where
         A: EntityAdapter + Entity + Send + Sync + Default + 'static,
     {
         self.adapters.insert(name, Box::<A>::default());
+
+        self
     }
 
     #[inline]
-    pub fn with_provider<P>(&mut self, provider: P)
+    pub fn with_provider<P>(mut self, provider: P) -> Self
     where
-        P: Send + Sync + 'static,
+        P: Any + Send + Sync + 'static,
     {
         self.providers.insert(TypeId::of::<P>(), Box::new(provider));
+
+        self
     }
 
     pub async fn evaluate_with_subject<S: Entity>(
@@ -45,7 +53,7 @@ impl Engine {
             .providers
             .get(&adapter.provider_type())
             .ok_or(Error::AdapterNotFound)?;
-        let resource_entity = adapter.load(resource_id, provider).await;
+        let resource_entity = adapter.load(resource_id, provider.as_ref()).await?;
 
         evaluate(subject, resource_entity.as_ref(), rules)
     }

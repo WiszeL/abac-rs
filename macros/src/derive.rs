@@ -55,7 +55,7 @@ pub fn derive_entity_impl(input: TokenStream) -> TokenStream {
         #gen_field_names
 
         impl #crate_ident::Entity for #struct_ident {
-            fn into_value(&self) -> Result<
+            fn to_value(&self) -> Result<
                 std::collections::HashMap<String, #crate_ident::serde_value::Value>,
                 #crate_ident::Error
             > {

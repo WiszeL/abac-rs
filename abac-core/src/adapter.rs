@@ -5,15 +5,17 @@ use std::{
 
 use uuid::Uuid;
 
-use crate::Entity;
+use crate::{Entity, Error};
 
-pub type FutPin<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
+pub type LoadResult<'a, T> = Pin<Box<dyn Future<Output = Result<T, Error>> + Send + 'a>>;
 
 /// Adapter for the entity to load the data before getting evaluated
 pub trait EntityAdapter: Entity {
-    type Provider: Send + Sync;
+    type Provider: Any + Send + Sync;
 
-    fn load_data(id: Uuid, provider: &Self::Provider) -> FutPin<Self>;
+    fn load_data(id: Uuid, provider: &Self::Provider) -> LoadResult<Self>
+    where
+        Self: Sized;
 }
 
 pub(crate) trait DynAdapter {
@@ -25,7 +27,7 @@ pub(crate) trait DynAdapter {
         &self,
         id: Uuid,
         provider: &'a (dyn Any + Send + Sync),
-    ) -> FutPin<'a, Box<dyn Entity>>;
+    ) -> LoadResult<'a, Box<dyn Entity>>;
 }
 
 impl<T> DynAdapter for T
@@ -40,15 +42,17 @@ where
         &self,
         id: Uuid,
         provider: &'a (dyn Any + Send + Sync),
-    ) -> FutPin<'a, Box<dyn Entity>> {
-        let provider = provider
-            .downcast_ref::<T::Provider>()
-            .expect("Provider type mismatch!");
-
+    ) -> LoadResult<'a, Box<dyn Entity>> {
         Box::pin(async move {
-            let entity = T::load_data(id, provider).await;
+            // Get the right provider
+            let provider = provider
+                .downcast_ref::<T::Provider>()
+                .ok_or(Error::ProviderNotFound)?;
 
-            Box::new(entity) as Box<dyn Entity>
+            // Load the entity
+            let entity = T::load_data(id, provider).await?;
+
+            Ok(Box::new(entity) as Box<dyn Entity>)
         })
     }
 }

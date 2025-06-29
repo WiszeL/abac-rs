@@ -4,7 +4,7 @@ use macros::Entity;
 use serde_value::Value;
 use uuid::Uuid;
 
-use crate::{DynAdapter, EntityAdapter, FutPin};
+use crate::{DynAdapter, EntityAdapter, LoadResult};
 
 #[derive(Entity, Default)]
 struct Task {
@@ -15,11 +15,11 @@ impl EntityAdapter for Task {
     type Provider = PathBuf;
 
     // Assume it loads data from database
-    fn load_data(_: uuid::Uuid, _: &Self::Provider) -> FutPin<Self> {
+    fn load_data(_: uuid::Uuid, _: &Self::Provider) -> LoadResult<Self> {
         Box::pin(async move {
-            Self {
+            Ok(Self {
                 owner: "WiszeL".into(),
-            }
+            })
         })
     }
 }
@@ -32,7 +32,7 @@ async fn dyn_adapter_test() {
 
     // ##### Act ##### //
     let adapter_provider = dyn_adapter.provider_type();
-    let adapter_load = dyn_adapter.load(Uuid::nil(), &path_buf).await;
+    let adapter_load = dyn_adapter.load(Uuid::nil(), &path_buf).await.unwrap();
 
     // ##### Arrange ##### //
     assert_eq!(
@@ -41,7 +41,7 @@ async fn dyn_adapter_test() {
         "Should havea the same provider!"
     );
     assert_eq!(
-        adapter_load.into_value().unwrap().get("owner"),
+        adapter_load.to_value().unwrap().get("owner"),
         Some(Value::String("WiszeL".into())).as_ref(),
         "Should really load"
     );

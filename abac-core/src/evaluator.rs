@@ -18,8 +18,8 @@ pub(crate) fn which_to_evaluate<'a>(
 /// The actual
 pub fn evaluate(subject: &dyn Entity, object: &dyn Entity, rules: &Rules) -> Result<bool, Error> {
     // Construct Entity
-    let subject = subject.into_value()?;
-    let object = object.into_value()?;
+    let subject = subject.to_value()?;
+    let object = object.to_value()?;
 
     rules.0.iter().try_fold(true, |acc, r_and| {
         if !acc {
