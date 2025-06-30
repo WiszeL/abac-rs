@@ -18,7 +18,7 @@ pub trait EntityAdapter: Entity {
         Self: Sized;
 }
 
-pub(crate) trait DynAdapter {
+pub(crate) trait DynAdapter: Send + Sync {
     /// Which provider does adapter need?
     fn provider_type(&self) -> TypeId;
 
