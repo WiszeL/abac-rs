@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 use serde_value::Value;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) enum SideRule {
     Subject(/* Field Name */ String),
     Object(/* Field Name */ String),
     Literal(/* Literal Value */ Value),
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) enum Operator {
     Equal,
     Greater,
@@ -17,12 +17,12 @@ pub(crate) enum Operator {
     LessEqual,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct Rule {
     pub(crate) left_rule: SideRule,
     pub(crate) operator: Operator,
     pub(crate) right_rule: SideRule,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Rules(pub(crate) Vec<Vec<Rule>>);
