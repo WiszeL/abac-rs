@@ -62,14 +62,14 @@ async fn evaluate_with_subject_test() {
     let path_buf = PathBuf::new();
 
     let w_rsc_rule = vec![Rule {
-        left_rule: SideRule::Subject("name".into()),
+        left: SideRule::Subject("name".into()),
         operator: Operator::Equal,
-        right_rule: SideRule::Object("owner".into()),
+        right: SideRule::Object("owner".into()),
     }];
     let wo_rsc_rule = vec![Rule {
-        left_rule: SideRule::Subject("name".into()),
+        left: SideRule::Subject("name".into()),
         operator: Operator::Equal,
-        right_rule: SideRule::Literal(Value::String("WiszeL".into())),
+        right: SideRule::Literal(Value::String("WiszeL".into())),
     }];
 
     let w_rsc_rules = Rules(vec![w_rsc_rule]);

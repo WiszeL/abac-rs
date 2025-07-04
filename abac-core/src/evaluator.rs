@@ -7,11 +7,11 @@ pub(crate) fn which_to_evaluate<'a>(
     subject: &'a EntityValue,
     object: &'a EntityValue,
     side_rule: &'a SideRule,
-) -> Result<&'a Value, Error> {
+) -> &'a Value {
     match side_rule {
-        SideRule::Subject(field_name) => subject.get(field_name).ok_or(Error::FieldNotFound),
-        SideRule::Object(field_name) => object.get(field_name).ok_or(Error::FieldNotFound),
-        SideRule::Literal(value) => Ok(value),
+        SideRule::Subject(field_name) => subject.get(field_name).unwrap_or(&Value::Bool(false)),
+        SideRule::Object(field_name) => object.get(field_name).unwrap_or(&Value::Bool(false)),
+        SideRule::Literal(value) => value,
     }
 }
 
@@ -31,8 +31,8 @@ pub fn evaluate(subject: &dyn Entity, object: &dyn Entity, rules: &Rules) -> Res
                 return Ok::<_, Error>(true); // short-circuit inner OR
             }
 
-            let left = which_to_evaluate(&subject, &object, &rule.left_rule)?;
-            let right = which_to_evaluate(&subject, &object, &rule.right_rule)?;
+            let left = which_to_evaluate(&subject, &object, &rule.left);
+            let right = which_to_evaluate(&subject, &object, &rule.right);
 
             let pass = match rule.operator {
                 Operator::Equal => left == right,

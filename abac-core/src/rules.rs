@@ -19,9 +19,9 @@ pub(crate) enum Operator {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) struct Rule {
-    pub(crate) left_rule: SideRule,
+    pub(crate) left: SideRule,
     pub(crate) operator: Operator,
-    pub(crate) right_rule: SideRule,
+    pub(crate) right: SideRule,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

@@ -7,9 +7,9 @@ fn rule_01_equal_subject_vs_object() {
     // ##### Arrange ##### //
     let json_rule = r#"
         {
-            "left_rule":  { "Subject": "name" },
+            "left":  { "Subject": "name" },
             "operator":   "Equal",
-            "right_rule": { "Object":  "owner" }
+            "right": { "Object":  "owner" }
         }
         "#;
 
@@ -17,9 +17,9 @@ fn rule_01_equal_subject_vs_object() {
     let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
 
     // ##### Assert ##### //
-    assert!(matches!(rule.left_rule,
+    assert!(matches!(rule.left,
                          SideRule::Subject(ref s) if s == "name"));
-    assert!(matches!(rule.right_rule,
+    assert!(matches!(rule.right,
                          SideRule::Object(ref s) if s == "owner"));
     assert!(matches!(rule.operator, Operator::Equal));
 }
@@ -29,9 +29,9 @@ fn rule_02_greater_subject_vs_literal() {
     // ##### Arrange ##### //
     let json_rule = r#"
         {
-            "left_rule":  { "Subject": "age" },
+            "left":  { "Subject": "age" },
             "operator":   "Greater",
-            "right_rule": { "Literal": 18 }
+            "right": { "Literal": 18 }
         }
         "#;
 
@@ -39,9 +39,9 @@ fn rule_02_greater_subject_vs_literal() {
     let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
 
     // ##### Assert ##### //
-    assert!(matches!(rule.left_rule,
+    assert!(matches!(rule.left,
                          SideRule::Subject(ref s) if s == "age"));
-    assert!(matches!(rule.right_rule,
+    assert!(matches!(rule.right,
                          SideRule::Literal(ref v) if *v == Value::U64(18)));
     assert!(matches!(rule.operator, Operator::Greater));
 }
@@ -51,9 +51,9 @@ fn rule_03_less_subject_vs_literal() {
     // ##### Arrange ##### //
     let json_rule = r#"
         {
-            "left_rule":  { "Subject": "priority" },
+            "left":  { "Subject": "priority" },
             "operator":   "Less",
-            "right_rule": { "Literal": 5 }
+            "right": { "Literal": 5 }
         }
         "#;
 
@@ -61,9 +61,9 @@ fn rule_03_less_subject_vs_literal() {
     let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
 
     // ##### Assert ##### //
-    assert!(matches!(rule.left_rule,
+    assert!(matches!(rule.left,
                          SideRule::Subject(ref s) if s == "priority"));
-    assert!(matches!(rule.right_rule,
+    assert!(matches!(rule.right,
                          SideRule::Literal(ref v) if *v == Value::U64(5)));
     assert!(matches!(rule.operator, Operator::Less));
 }
@@ -73,9 +73,9 @@ fn rule_04_greater_equal_subject_vs_literal() {
     // ##### Arrange ##### //
     let json_rule = r#"
         {
-            "left_rule":  { "Subject": "score" },
+            "left":  { "Subject": "score" },
             "operator":   "GreaterEqual",
-            "right_rule": { "Literal": 90 }
+            "right": { "Literal": 90 }
         }
         "#;
 
@@ -83,9 +83,9 @@ fn rule_04_greater_equal_subject_vs_literal() {
     let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
 
     // ##### Assert ##### //
-    assert!(matches!(rule.left_rule,
+    assert!(matches!(rule.left,
                          SideRule::Subject(ref s) if s == "score"));
-    assert!(matches!(rule.right_rule,
+    assert!(matches!(rule.right,
                          SideRule::Literal(ref v) if *v == Value::U64(90)));
     assert!(matches!(rule.operator, Operator::GreaterEqual));
 }
@@ -95,9 +95,9 @@ fn rule_05_less_equal_subject_vs_literal() {
     // ##### Arrange ##### //
     let json_rule = r#"
         {
-            "left_rule":  { "Subject": "cost" },
+            "left":  { "Subject": "cost" },
             "operator":   "LessEqual",
-            "right_rule": { "Literal": 1000 }
+            "right": { "Literal": 1000 }
         }
         "#;
 
@@ -105,9 +105,9 @@ fn rule_05_less_equal_subject_vs_literal() {
     let rule: Rule = serde_json::from_str(json_rule).expect("Should deserialize Rule");
 
     // ##### Assert ##### //
-    assert!(matches!(rule.left_rule,
+    assert!(matches!(rule.left,
                          SideRule::Subject(ref s) if s == "cost"));
-    assert!(matches!(rule.right_rule,
+    assert!(matches!(rule.right,
                          SideRule::Literal(ref v) if *v == Value::U64(1000)));
     assert!(matches!(rule.operator, Operator::LessEqual));
 }

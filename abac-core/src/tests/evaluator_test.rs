@@ -25,7 +25,7 @@ fn which_to_evaluate_test() {
     let binding = SideRule::Subject("age".into());
     let result = which_to_evaluate(&subject, &object, &binding);
     assert!(
-        matches!(result, Ok(Value::I32(21))),
+        matches!(result, Value::I32(21)),
         "Case 01: should return subject field 'age'"
     );
 
@@ -35,7 +35,7 @@ fn which_to_evaluate_test() {
     let binding = SideRule::Object("owner".into());
     let result = which_to_evaluate(&subject, &object, &binding);
     assert!(
-        matches!(result, Ok(Value::String(s)) if s == "WiszeL"),
+        matches!(result, Value::String(s) if s == "WiszeL"),
         "Case 02: should return object field 'owner'"
     );
 
@@ -45,17 +45,17 @@ fn which_to_evaluate_test() {
     let binding = SideRule::Literal(literal.clone());
     let result = which_to_evaluate(&subject, &object, &binding);
     assert!(
-        matches!(result, Ok(val) if *val == literal),
+        matches!(result, val if *val == literal),
         "Case 03: should return literal directly"
     );
 
     /* -----------------------------------------------
-     * Case 04 – Missing field returns error
+     * Case 04 – Missing field returns false
      * ----------------------------------------------- */
     let binding = SideRule::Subject("not_found".into());
     let result = which_to_evaluate(&subject, &object, &binding);
     assert!(
-        result.is_err(),
+        matches!(result, Value::Bool(false)),
         "Case 04: should return error for missing subject field"
     );
 }
@@ -88,73 +88,92 @@ async fn evaluate_test() {
      * Case 01 – Subject.age >= 18 → true
      * ----------------------------------------------- */
     let rules = Rules(vec![vec![Rule {
-        left_rule: SideRule::Subject("age".into()),
+        left: SideRule::Subject("age".into()),
         operator: Operator::GreaterEqual,
-        right_rule: SideRule::Literal(Value::U64(18)),
+        right: SideRule::Literal(Value::U64(18)),
     }]]);
 
     let result = evaluate(&user, &task, &rules);
-    assert_eq!(result.unwrap(), true, "Case 01: age >= 18 should pass");
+    assert!(result.unwrap(), "Case 01: age >= 18 should pass");
 
     /* -----------------------------------------------
      * Case 02 – Subject.name == Object.owner → true
      * ----------------------------------------------- */
     let rules = Rules(vec![vec![Rule {
-        left_rule: SideRule::Subject("name".into()),
+        left: SideRule::Subject("name".into()),
         operator: Operator::Equal,
-        right_rule: SideRule::Object("owner".into()),
+        right: SideRule::Object("owner".into()),
     }]]);
 
     let result = evaluate(&user, &task, &rules);
-    assert_eq!(result.unwrap(), true, "Case 02: name == owner should pass");
+    assert!(result.unwrap(), "Case 02: name == owner should pass");
 
     /* -----------------------------------------------
      * Case 03 – Subject.age > 30 → false
      * ----------------------------------------------- */
     let rules = Rules(vec![vec![Rule {
-        left_rule: SideRule::Subject("age".into()),
+        left: SideRule::Subject("age".into()),
         operator: Operator::Greater,
-        right_rule: SideRule::Literal(Value::U64(30)),
+        right: SideRule::Literal(Value::U64(30)),
     }]]);
 
     let result = evaluate(&user, &task, &rules);
-    assert_eq!(result.unwrap(), false, "Case 03: age > 30 should fail");
+    assert!(!result.unwrap(), "Case 03: age > 30 should fail");
 
     /* -----------------------------------------------
      * Case 04 – OR group: (age > 30 OR name == owner) → true
      * ----------------------------------------------- */
     let rules = Rules(vec![vec![
         Rule {
-            left_rule: SideRule::Subject("age".into()),
+            left: SideRule::Subject("age".into()),
             operator: Operator::Greater,
-            right_rule: SideRule::Literal(Value::U64(30)),
+            right: SideRule::Literal(Value::U64(30)),
         },
         Rule {
-            left_rule: SideRule::Subject("name".into()),
+            left: SideRule::Subject("name".into()),
             operator: Operator::Equal,
-            right_rule: SideRule::Object("owner".into()),
+            right: SideRule::Object("owner".into()),
         },
     ]]);
 
     let result = evaluate(&user, &task, &rules);
-    assert_eq!(result.unwrap(), true, "Case 04: OR group should pass");
+    assert!(result.unwrap(), "Case 04: OR group should pass");
 
     /* -----------------------------------------------
      * Case 05 – AND group fail: (age >= 18) AND (name == 'SomeoneElse') → false
      * ----------------------------------------------- */
     let rules = Rules(vec![
         vec![Rule {
-            left_rule: SideRule::Subject("age".into()),
+            left: SideRule::Subject("age".into()),
             operator: Operator::GreaterEqual,
-            right_rule: SideRule::Literal(Value::U64(18)),
+            right: SideRule::Literal(Value::U64(18)),
         }],
         vec![Rule {
-            left_rule: SideRule::Subject("name".into()),
+            left: SideRule::Subject("name".into()),
             operator: Operator::Equal,
-            right_rule: SideRule::Literal(Value::String("SomeoneElse".into())),
+            right: SideRule::Literal(Value::String("SomeoneElse".into())),
         }],
     ]);
 
     let result = evaluate(&user, &task, &rules);
-    assert_eq!(result.unwrap(), false, "Case 05: AND block should fail");
+    assert!(!result.unwrap(), "Case 05: AND block should fail");
+
+    /* -----------------------------------------------
+     * Case 06 – Field is invalid/not found, continue anyway and result true
+     * ----------------------------------------------- */
+    let rules = Rules(vec![vec![
+        Rule {
+            left: SideRule::Subject("name".into()),
+            operator: Operator::Equal,
+            right: SideRule::Object("owner".into()),
+        },
+        Rule {
+            left: SideRule::Subject("name".into()),
+            operator: Operator::Equal,
+            right: SideRule::Object("editor".into()),
+        },
+    ]]);
+
+    let result = evaluate(&user, &task, &rules);
+    assert!(result.unwrap(), "Case 06: name == owner, but field not found...ignored n still should pass");
 }
