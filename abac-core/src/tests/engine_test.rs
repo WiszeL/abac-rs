@@ -4,7 +4,7 @@ use macros::Entity;
 use serde_value::Value;
 use uuid::Uuid;
 
-use crate::{Engine, EntityAdapter, LoadResult, Operator, Rule, Rules, SideRule};
+use crate::{Engine, EntityAdapter, EvaluateEntity, LoadResult, Operator, Rule, Rules, SideRule};
 
 #[derive(Entity, Default)]
 struct Task {
@@ -15,7 +15,7 @@ impl EntityAdapter for Task {
     type Provider = PathBuf;
 
     // Assume it loads data from database
-    fn load_data(_: uuid::Uuid, _: &Self::Provider) -> LoadResult<Self> {
+    fn load_data(_: Uuid, _: &Self::Provider) -> LoadResult<Self> {
         Box::pin(async move {
             Ok(Self {
                 owner: "WiszeL".into(),
@@ -24,9 +24,22 @@ impl EntityAdapter for Task {
     }
 }
 
-#[derive(Entity)]
+#[derive(Entity, Default)]
 struct User {
     name: String,
+}
+
+impl EntityAdapter for User {
+    type Provider = PathBuf;
+
+    // Assume it loads data from database
+    fn load_data(_: Uuid, _: &Self::Provider) -> LoadResult<Self> {
+        Box::pin(async move {
+            Ok(Self {
+                name: "WiszeL".into(),
+            })
+        })
+    }
 }
 
 #[test]
@@ -77,21 +90,22 @@ async fn evaluate_with_subject_test() {
 
     let engine = Engine::new()
         .with_provider(path_buf)
+        .register_adapter::<User>("user")
         .register_adapter::<Task>("task");
 
     // ##### Act ##### //
-    let subject = User {
-        name: "WiszeL".into(),
-    };
+    let evaluate_subject = EvaluateEntity::new("user", Uuid::nil().into());
 
     // 1. With Resource
+    let evaluate_resource = EvaluateEntity::new("task", Uuid::nil().into());
     let w_result = engine
-        .evaluate_with_subject(&subject, "task", Some(Uuid::nil()), &w_rsc_rules)
+        .evaluate(evaluate_subject.clone(), evaluate_resource, &w_rsc_rules)
         .await;
 
     // 2. Without Resource
+    let evaluate_resource = EvaluateEntity::new("task", Uuid::nil().into());
     let wo_result = engine
-        .evaluate_with_subject(&subject, "task", None, &wo_rsc_rules)
+        .evaluate(evaluate_subject, evaluate_resource, &wo_rsc_rules)
         .await;
 
     // ##### Assert ##### //

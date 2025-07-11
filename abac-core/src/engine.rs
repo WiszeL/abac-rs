@@ -7,6 +7,19 @@ use uuid::Uuid;
 
 use crate::{DynAdapter, EmptyEntity, Entity, EntityAdapter, Error, Rules, evaluate};
 
+/// Which Entity to evaluate?
+#[derive(Clone)]
+pub struct EvaluateEntity<'a> {
+    name: &'a str,
+    id: Option<Uuid>,
+}
+
+impl<'a> EvaluateEntity<'a> {
+    pub fn new(name: &'a str, id: Option<Uuid>) -> Self {
+        Self { name, id }
+    }
+}
+
 #[derive(Default)]
 pub struct Engine {
     pub(crate) adapters: HashMap<&'static str, Box<dyn DynAdapter>>,
@@ -41,26 +54,43 @@ impl Engine {
         self
     }
 
-    pub async fn evaluate_with_subject<S: Entity>(
+    pub async fn evaluate(
         &self,
-        subject: &S,
-        resource: &str,
-        resource_id: Option<Uuid>,
+        subject: EvaluateEntity<'_>,
+        resource: EvaluateEntity<'_>,
         rules: &Rules,
     ) -> Result<bool, Error> {
-        let resource_entity = match resource_id {
-            Some(id) => {
-                let adapter = self.adapters.get(resource).ok_or(Error::AdapterNotFound)?;
-                let provider = self
-                    .providers
-                    .get(&adapter.provider_type())
-                    .ok_or(Error::AdapterNotFound)?;
+        // Subject
+        let EvaluateEntity {
+            name: sub_name,
+            id: sub_id,
+        } = subject;
+        let sub_id = sub_id.ok_or(Error::SubjectNotFound)?;
+        let sub_adapter = self.adapters.get(sub_name).ok_or(Error::AdapterNotFound)?;
+        let sub_provider = self
+            .providers
+            .get(&sub_adapter.provider_type())
+            .ok_or(Error::ProviderNotFound)?;
+        let subject_entity = sub_adapter.load(sub_id, sub_provider.as_ref()).await?;
 
-                adapter.load(id, provider.as_ref()).await?
+        // Resource
+        let EvaluateEntity {
+            name: rsc_name,
+            id: rsc_id,
+        } = resource;
+        let resource_entity = match rsc_id {
+            Some(id) => {
+                let rsc_adapter = self.adapters.get(rsc_name).ok_or(Error::AdapterNotFound)?;
+                let rsc_provider = self
+                    .providers
+                    .get(&rsc_adapter.provider_type())
+                    .ok_or(Error::ProviderNotFound)?;
+
+                rsc_adapter.load(id, rsc_provider.as_ref()).await?
             }
             None => Box::new(EmptyEntity),
         };
 
-        evaluate(subject, resource_entity.as_ref(), rules)
+        evaluate(subject_entity.as_ref(), resource_entity.as_ref(), rules)
     }
 }
