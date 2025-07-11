@@ -17,5 +17,11 @@ pub enum Error {
     /// This error should be provided by user when impl to load data
     /// Error should be able to be stringified
     #[error("Something wrong when loading entity: {0}")]
-    LoadError(#[from] Box<dyn std::error::Error + Send + Sync>),
+    LoadError(Box<dyn std::error::Error + Send + Sync>),
+}
+
+impl Error {
+    pub fn load_error<E: std::error::Error + Send + Sync + 'static>(err: E) -> Self {
+        Self::LoadError(Box::new(err))
+    }
 }
