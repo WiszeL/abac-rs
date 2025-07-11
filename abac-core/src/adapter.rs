@@ -32,7 +32,7 @@ pub(crate) trait DynAdapter: Send + Sync {
 
 impl<T> DynAdapter for T
 where
-    T: EntityAdapter + Send + Sync + 'static,
+    T: EntityAdapter + 'static,
 {
     fn provider_type(&self) -> TypeId {
         TypeId::of::<T::Provider>()

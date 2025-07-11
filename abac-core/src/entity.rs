@@ -7,7 +7,7 @@ use crate::Error;
 pub(crate) type EntityValue = HashMap<String, Value>;
 
 /// The actual Entity that is gonna be evaluated by ABAC
-pub trait Entity {
+pub trait Entity: Send + Sync {
     /// Converting into Serde Value, No need "Serialize" anymore
     fn to_value(&self) -> Result<EntityValue, Error>;
 

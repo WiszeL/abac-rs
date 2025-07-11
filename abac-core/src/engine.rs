@@ -37,7 +37,7 @@ impl Engine {
     #[inline]
     pub fn register_adapter<A>(mut self, name: &'static str) -> Self
     where
-        A: EntityAdapter + Entity + Send + Sync + Default + 'static,
+        A: EntityAdapter + Entity + Default + 'static,
     {
         self.adapters.insert(name, Box::<A>::default());
 
