@@ -54,31 +54,13 @@ impl Engine {
         self
     }
 
-    pub async fn evaluate(
-        &self,
-        subject: EvaluateEntity<'_>,
-        resource: EvaluateEntity<'_>,
-        rules: &Rules,
-    ) -> Result<bool, Error> {
-        // Subject
-        let EvaluateEntity {
-            name: sub_name,
-            id: sub_id,
-        } = subject;
-        let sub_id = sub_id.ok_or(Error::SubjectNotFound)?;
-        let sub_adapter = self.adapters.get(sub_name).ok_or(Error::AdapterNotFound)?;
-        let sub_provider = self
-            .providers
-            .get(&sub_adapter.provider_type())
-            .ok_or(Error::ProviderNotFound)?;
-        let subject_entity = sub_adapter.load(sub_id, sub_provider.as_ref()).await?;
-
-        // Resource
+    pub async fn load(&self, evaluate: EvaluateEntity<'_>) -> Result<Box<dyn Entity>, Error> {
         let EvaluateEntity {
             name: rsc_name,
             id: rsc_id,
-        } = resource;
-        let resource_entity = match rsc_id {
+        } = evaluate;
+
+        match rsc_id {
             Some(id) => {
                 let rsc_adapter = self.adapters.get(rsc_name).ok_or(Error::AdapterNotFound)?;
                 let rsc_provider = self
@@ -86,10 +68,20 @@ impl Engine {
                     .get(&rsc_adapter.provider_type())
                     .ok_or(Error::ProviderNotFound)?;
 
-                rsc_adapter.load(id, rsc_provider.as_ref()).await?
+                rsc_adapter.load(id, rsc_provider.as_ref()).await
             }
-            None => Box::new(EmptyEntity),
-        };
+            None => Ok(Box::new(EmptyEntity)),
+        }
+    }
+
+    pub async fn evaluate(
+        &self,
+        subject: EvaluateEntity<'_>,
+        resource: EvaluateEntity<'_>,
+        rules: &Rules,
+    ) -> Result<bool, Error> {
+        let subject_entity = self.load(subject).await?;
+        let resource_entity = self.load(resource).await?;
 
         evaluate(subject_entity.as_ref(), resource_entity.as_ref(), rules)
     }
