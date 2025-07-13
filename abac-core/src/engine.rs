@@ -22,6 +22,7 @@ impl<'a> EvaluateEntity<'a> {
 
 #[derive(Default)]
 pub struct Engine {
+    pub(crate) entities: HashMap<&'static str, Box<dyn Entity>>,
     pub(crate) adapters: HashMap<&'static str, Box<dyn DynAdapter>>,
     pub(crate) providers: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
@@ -29,6 +30,7 @@ pub struct Engine {
 impl Engine {
     pub fn new() -> Self {
         Self {
+            entities: HashMap::new(),
             adapters: HashMap::new(),
             providers: HashMap::new(),
         }
@@ -40,6 +42,7 @@ impl Engine {
         A: EntityAdapter + Entity + Default + 'static,
     {
         self.adapters.insert(name, Box::<A>::default());
+        self.entities.insert(name, Box::<A>::default());
 
         self
     }
@@ -52,6 +55,13 @@ impl Engine {
         self.providers.insert(TypeId::of::<P>(), Box::new(provider));
 
         self
+    }
+
+    #[inline]
+    pub fn get_entity_fields(&self, name: &str) -> Result<&'static [&'static str], Error> {
+        let entity = self.entities.get(name).ok_or(Error::AdapterNotFound)?;
+
+        Ok(entity.field_names())
     }
 
     pub async fn load(&self, evaluate: EvaluateEntity<'_>) -> Result<Box<dyn Entity>, Error> {
